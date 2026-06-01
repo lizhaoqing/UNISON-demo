@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UNISON: A Unified Sound Generation and Editing Framework via Deep LLM Fusion</title>
+  <style>
+    :root {
+      --accent: #2563eb;
+      --accent-light: #eff6ff;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --border: #e2e8f0;
+      --text: #1e293b;
+      --muted: #64748b;
+      --tag-bg: #f1f5f9;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    /* ── header ── */
+    header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 3rem 1rem 2rem;
+      text-align: center;
+    }
+    header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      max-width: 860px;
+      margin: 0 auto 0.5rem;
+      line-height: 1.25;
+    }
+    .subtitle {
+      color: var(--muted);
+      font-size: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    .badges a {
+      display: inline-flex;
+      line-height: 0;
+      transition: transform 0.15s ease, opacity 0.15s ease;
+    }
+    .badges a:hover {
+      transform: translateY(-1px);
+      opacity: 0.92;
+    }
+    .badges img {
+      height: 28px;
+      border-radius: 4px;
+    }
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .subtitle a:hover, footer a:hover {
+      text-decoration: underline;
+    }
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .tag {
+      background: var(--tag-bg);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 0.25rem 0.85rem;
+      font-size: 0.825rem;
+      color: var(--muted);
+    }
+    .abstract-box {
+      max-width: 820px;
+      margin: 0 auto;
+      background: var(--accent-light);
+      border-left: 4px solid var(--accent);
+      border-radius: 0.5rem;
+      padding: 1rem 1.25rem;
+      text-align: left;
+      font-size: 0.92rem;
+    }
+    .abstract-box strong { color: var(--accent); }
+
+    /* ── main layout ── */
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2.5rem 1rem 4rem;
+    }
+
+    /* ── section headings ── */
+    .section { margin-bottom: 3.5rem; }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.5rem;
+    }
+    .section-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2rem; height: 2rem;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.875rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    h2 { font-size: 1.35rem; font-weight: 700; }
+    .section-desc {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 1.25rem;
+      max-width: 780px;
+    }
+
+    /* ── comparison table ── */
+    .cmp-table-wrap {
+      overflow-x: auto;
+      border-radius: 0.75rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    }
+    table.cmp {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+      background: var(--card);
+    }
+    table.cmp thead th {
+      background: var(--text);
+      color: #fff;
+      padding: 0.65rem 1rem;
+      text-align: center;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    table.cmp thead th:first-child { text-align: left; }
+    table.cmp tbody tr { border-bottom: 1px solid var(--border); }
+    table.cmp tbody tr:last-child { border-bottom: none; }
+    table.cmp tbody tr:hover { background: #f8fafc; }
+    table.cmp td {
+      padding: 0.75rem 1rem;
+      vertical-align: middle;
+      text-align: center;
+    }
+    table.cmp td:first-child { text-align: left; }
+    .prompt-cell {
+      max-width: 300px;
+      font-size: 0.825rem;
+      color: var(--text);
+      line-height: 1.45;
+    }
+    #t2a .prompt-cell {
+      max-width: 420px;
+      min-width: 260px;
+    }
+    #zs-tts .prompt-cell, #edit-audio .prompt-cell {
+      max-width: 360px;
+      min-width: 220px;
+    }
+    #denoise .prompt-cell {
+      max-width: 420px;
+      min-width: 260px;
+    }
+    #tts .prompt-cell {
+      max-width: 360px;
+      min-width: 220px;
+    }
+    #edit-speech .prompt-cell {
+      max-width: 360px;
+      min-width: 220px;
+    }
+    .prompt-label {
+      font-size: 0.75rem;
+      color: var(--muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      margin-bottom: 0.2rem;
+    }
+
+    /* row that highlights UNISON */
+    tr.ours td { background: #eff6ff; }
+    tr.ours td:first-child { font-weight: 600; color: var(--accent); }
+
+    /* ── audio player ── */
+    .ap-wrap { display: flex; flex-direction: column; align-items: center; gap: 0.2rem; }
+    audio {
+      width: 260px;
+      height: 32px;
+      outline: none;
+    }
+    .ap-label {
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-align: center;
+      max-width: 260px;
+      word-break: break-word;
+    }
+
+    /* missing placeholder */
+    .placeholder {
+      display: inline-block;
+      width: 260px;
+      height: 28px;
+      background: var(--border);
+      border-radius: 4px;
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-align: center;
+      line-height: 28px;
+    }
+
+    /* ── architecture figure ── */
+    .figure-wrap {
+      text-align: center;
+      margin: 1.5rem 0;
+    }
+    .figure-wrap img {
+      max-width: 82%;
+      width: 82%;
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,.08);
+    }
+    .fig-caption {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-top: 0.5rem;
+    }
+
+    /* ── metrics card ── */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    .metric-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      padding: 0.75rem 1rem;
+    }
+    .metric-card .task-name {
+      font-size: 0.75rem;
+      color: var(--muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .metric-card .metric-val {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .metric-card .metric-name {
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    /* ── footnote ── */
+    footer {
+      text-align: center;
+      padding: 2rem 1rem;
+      color: var(--muted);
+      font-size: 0.8rem;
+      border-top: 1px solid var(--border);
+    }
+
+    /* nav */
+    nav {
+      position: sticky;
+      top: 0;
+      background: #1e293b;
+      border-bottom: 3px solid var(--accent);
+      z-index: 100;
+      padding: 0 1rem;
+      box-shadow: 0 2px 12px rgba(0,0,0,.25);
+    }
+    nav ul {
+      list-style: none;
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 0;
+      max-width: 1200px;
+      margin: 0 auto;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    nav ul::-webkit-scrollbar { display: none; }
+    nav ul li a {
+      display: block;
+      padding: 0.6rem 0.6rem;
+      font-size: 0.73rem;
+      color: #cbd5e1;
+      text-decoration: none;
+      font-weight: 600;
+      letter-spacing: 0;
+      text-transform: uppercase;
+      white-space: nowrap;
+      transition: color 0.15s, background 0.15s;
+      border-bottom: 2px solid transparent;
+    }
+    nav ul li a:hover {
+      color: #fff;
+      background: rgba(255,255,255,.07);
+      border-bottom-color: var(--accent);
+    }
+
+    @media (max-width: 640px) {
+      header h1 { font-size: 1.4rem; }
+      audio { width: 180px; }
+      .placeholder { width: 180px; }
+      nav ul li a { padding: 0.5rem 0.5rem; font-size: 0.75rem; }
+    }
+
+    /* ── UNISON "ours" column highlight ── */
+    th.ours-col {
+      background: #60a5fa !important;    /* blue-400 header */
+      color: #fff;
+      position: relative;
+    }
+    th.ours-col::after {
+      content: "";
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: #bfdbfe;
+    }
+    td.ours-col {
+      background: #eff6ff !important;
+    }
+
+    /* section-level nth-child rules for tables that have no class on cells */
+    #t2a    table.cmp th:nth-child(3), #t2a    table.cmp td:nth-child(3),
+    #t2a    table.cmp th:nth-child(4), #t2a    table.cmp td:nth-child(4) { background-color: #eff6ff; }
+    #t2a    table.cmp thead th:nth-child(3),
+    #t2a    table.cmp thead th:nth-child(4) { background: #60a5fa !important; color: #fff; }
+
+    #tts    table.cmp th:nth-child(2), #tts    table.cmp td:nth-child(2),
+    #tts    table.cmp th:nth-child(3), #tts    table.cmp td:nth-child(3) { background-color: #eff6ff; }
+    #tts    table.cmp thead th:nth-child(2),
+    #tts    table.cmp thead th:nth-child(3) { background: #60a5fa !important; color: #fff; }
+
+    #zs-tts table.cmp th:nth-child(4), #zs-tts table.cmp td:nth-child(4),
+    #zs-tts table.cmp th:nth-child(5), #zs-tts table.cmp td:nth-child(5) { background-color: #eff6ff; }
+    #zs-tts table.cmp thead th:nth-child(4),
+    #zs-tts table.cmp thead th:nth-child(5) { background: #60a5fa !important; color: #fff; }
+
+    #edit-audio table.cmp th:nth-child(3), #edit-audio table.cmp td:nth-child(3),
+    #edit-audio table.cmp th:nth-child(4), #edit-audio table.cmp td:nth-child(4) { background-color: #eff6ff; }
+    #edit-audio table.cmp thead th:nth-child(3),
+    #edit-audio table.cmp thead th:nth-child(4) { background: #60a5fa !important; color: #fff; }
+
+    #edit-speech table.cmp th:nth-child(3), #edit-speech table.cmp td:nth-child(3),
+    #edit-speech table.cmp th:nth-child(4), #edit-speech table.cmp td:nth-child(4) { background-color: #eff6ff; }
+    #edit-speech table.cmp thead th:nth-child(3),
+    #edit-speech table.cmp thead th:nth-child(4) { background: #60a5fa !important; color: #fff; }
+
+    #denoise table.cmp th:nth-child(4), #denoise table.cmp td:nth-child(4),
+    #denoise table.cmp th:nth-child(5), #denoise table.cmp td:nth-child(5) { background-color: #eff6ff; }
+    #denoise table.cmp thead th:nth-child(4),
+    #denoise table.cmp thead th:nth-child(5) { background: #60a5fa !important; color: #fff; }
+
+    #t2as    table.cmp th:nth-child(2), #t2as    table.cmp td:nth-child(2),
+    #t2as    table.cmp th:nth-child(3), #t2as    table.cmp td:nth-child(3) { background-color: #eff6ff; }
+    #t2as    table.cmp thead th:nth-child(2),
+    #t2as    table.cmp thead th:nth-child(3) { background: #60a5fa !important; color: #fff; }
+
+    #timed-gen table.cmp th:nth-child(2), #timed-gen table.cmp td:nth-child(2),
+    #timed-gen table.cmp th:nth-child(3), #timed-gen table.cmp td:nth-child(3) { background-color: #eff6ff; }
+    #timed-gen table.cmp thead th:nth-child(2),
+    #timed-gen table.cmp thead th:nth-child(3) { background: #60a5fa !important; color: #fff; }
+
+    /* ── T2A sticky prompt column ── */
+    #t2a table.cmp td:first-child,
+    #t2a table.cmp th:first-child {
+      position: -webkit-sticky;
+      position: sticky;
+      left: 0;
+      z-index: 20;
+      background-color: #ffffff;
+      box-shadow: 2px 0 4px -1px rgba(0,0,0,0.12);
+    }
+    #t2a table.cmp thead th:first-child {
+      background-color: #1e293b;
+      z-index: 21;
+    }
+    #t2a table.cmp tbody tr:hover td:first-child {
+      background-color: #f8fafc;
+    }
+
+    /* ── Audio Edit sticky instruction column ── */
+    #edit-audio table.cmp td:first-child,
+    #edit-audio table.cmp th:first-child {
+      position: -webkit-sticky;
+      position: sticky;
+      left: 0;
+      z-index: 20;
+      background-color: #ffffff;
+      box-shadow: 2px 0 4px -1px rgba(0,0,0,0.12);
+    }
+    #edit-audio table.cmp thead th:first-child {
+      background-color: #1e293b;
+      z-index: 21;
+    }
+    #edit-audio table.cmp tbody tr:hover td:first-child {
+      background-color: #f8fafc;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>UNISON: A Unified Sound Generation and Editing Framework via Deep LLM Fusion</h1>
+  <div class="badges">
+    <a href="https://arxiv.org/abs/2605.31530" target="_blank" rel="noopener noreferrer" aria-label="arXiv Paper">
+      <img src="https://img.shields.io/badge/arXiv-Paper-b31b1b?logo=arxiv&logoColor=white" alt="arXiv Paper">
+    </a>
+    <a href="https://github.com/lizhaoqing/UNISON" target="_blank" rel="noopener noreferrer" aria-label="GitHub Code">
+      <img src="https://img.shields.io/badge/GitHub-Code-181717?logo=github&logoColor=white" alt="GitHub Code">
+    </a>
+  </div>
+  <div class="tags">
+    <span class="tag">Text-to-Audio</span>
+    <span class="tag">Text-to-Speech</span>
+    <span class="tag">Zero-shot TTS</span>
+    <span class="tag">Mixed Speech+Audio</span>
+    <span class="tag">Audio Editing</span>
+    <span class="tag">Speech Editing</span>
+    <span class="tag">Timed Generation</span>
+    <span class="tag">Flow Matching</span>
+    <span class="tag">MM-DiT</span>
+    <span class="tag">LLM Fusion</span>
+  </div>
+  <div class="abstract-box">
+    <strong>Abstract.</strong>
+    We present UNISON, a unified latent diffusion framework for audio generation and editing.
+    Using a single set of weights, UNISON integrates speech generation, sound generation, and audio editing within one model.
+    The model supports Text-to-Audio, Text-to-Speech, zero-shot speaker cloning, mixed speech-and-sound generation,
+    scene-level audio editing, and speech-in-scene editing.
+    It features layer-wise deep LLM fusion, which injects depth-matched semantic conditioning from a frozen large language model
+    to improve instruction following for compositional audio prompts.
+  </div>
+</header>
+
+<nav>
+  <ul>
+    <li><a href="#architecture">Architecture</a></li>
+    <li><a href="#t2a">Text-to-Audio</a></li>
+    <li><a href="#tts">TTS</a></li>
+    <li><a href="#zs-tts">Zero-shot TTS</a></li>
+    <li><a href="#t2as">Speech+Audio</a></li>
+    <li><a href="#edit-audio">Audio Editing</a></li>
+    <li><a href="#edit-speech">Speech Editing</a></li>
+    <li><a href="#denoise">Denoising</a></li>
+    <li><a href="#timed-gen">Timed Gen</a></li>
+  </ul>
+</nav>
+
+<main>
+
+  <!-- ── Teaser ── -->
+  <div class="section" id="teaser" style="margin-bottom:2rem;">
+    <div class="figure-wrap">
+      <img src="images/fig1.png" alt="UNISON overview teaser"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='block'" />
+      <div style="display:none; padding:3rem; background:var(--border); border-radius:.75rem; color:var(--muted); font-size:.85rem;">
+        [Teaser figure — place <code>images/fig1.png</code> here]
+      </div>
+      <p class="fig-caption">Figure 1. Overview of UNISON. A single flow-matching model handles text-to-audio generation, zero-shot TTS, gender control, audio-scene editing, and timed temporal composition. All tasks share the same architecture and weights, differentiated only by a task mask channel and optional source latent concatenation.</p>
+    </div>
+  </div>
+
+  <!-- ── Architecture ── -->
+  <div class="section" id="architecture">
+    <div class="section-header">
+      <span class="section-num">0</span>
+      <h2>Model Architecture</h2>
+    </div>
+    <p class="section-desc">
+      All tasks share the same VAE encoder/decoder, MM-DiT backbone, and forward pass.
+      Task identity is encoded solely by a channel-wise mask; source audio is concatenated as
+      additional input channels in the latent space via VAE encoding.
+      Text conditioning uses <strong>layer-wise deep LLM fusion</strong>: hidden states from
+      uniformly sampled layers of the frozen Qwen2.5-Omni-7B backbone are injected into
+      corresponding MM-DiT double-stream blocks via learned linear projections.
+    </p>
+    <div class="figure-wrap">
+      <img src="images/fig2.png" alt="UNISON architecture diagram"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='block'" />
+      <div style="display:none; padding:3rem; background:var(--border); border-radius:.75rem; color:var(--muted); font-size:.85rem;">
+        [Architecture figure — place <code>images/fig2.png</code> here]
+      </div>
+      <p class="fig-caption">Figure 2. UNISON architecture. The frozen MLLM backbone (Qwen2.5-Omni-7B) provides layer-wise hidden states injected into the corresponding MM-DiT double-stream blocks via learned projections. Task identity is encoded by a channel-wise mask; source audio is provided via VAE-encoded channel concatenation.</p>
+    </div>
+  </div>
+
+  <!-- ── Summary metrics ── -->
+  <div class="section" id="metrics">
+    <div class="section-header">
+      <span class="section-num" style="background:var(--muted)">★</span>
+      <h2>Key Results (single checkpoint)</h2>
+    </div>
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="task-name">T2A · AudioCaps</div>
+        <div class="metric-val">1.56</div>
+        <div class="metric-name">FAD (VGGish) ↓</div>
+      </div>
+      <div class="metric-card">
+        <div class="task-name">T2A · AudioCaps</div>
+        <div class="metric-val">0.503</div>
+        <div class="metric-name">CLAP ↑</div>
+      </div>
+      <div class="metric-card">
+        <div class="task-name">Zero-shot TTS (EN)</div>
+        <div class="metric-val">1.50%</div>
+        <div class="metric-name">WER ↓</div>
+      </div>
+      <div class="metric-card">
+        <div class="task-name">Zero-shot TTS (ZH)</div>
+        <div class="metric-val">0.89%</div>
+        <div class="metric-name">CER ↓</div>
+      </div>
+      <div class="metric-card">
+        <div class="task-name">TTS (ZH)</div>
+        <div class="metric-val">0.92%</div>
+        <div class="metric-name">CER ↓</div>
+      </div>
+      <div class="metric-card">
+        <div class="task-name">TTS (EN)</div>
+        <div class="metric-val">1.27%</div>
+        <div class="metric-name">CER ↓</div>
+      </div>
+      <div class="metric-card">
+        <div class="task-name">TTS Gender</div>
+        <div class="metric-val">100%</div>
+        <div class="metric-name">Accuracy ↑</div>
+      </div>
+      <div class="metric-card">
+        <div class="task-name">Mixed Speech+Audio</div>
+        <div class="metric-val">0.444</div>
+        <div class="metric-name">CLAP ↑</div>
+      </div>
+      <div class="metric-card">
+        <div class="task-name">Audio Editing</div>
+        <div class="metric-val">0.364</div>
+        <div class="metric-name">CLAP ↑</div>
+      </div>
+      <div class="metric-card">
+        <div class="task-name">Timed Composition</div>
+        <div class="metric-val">0.308</div>
+        <div class="metric-name">Per-seg CLAP ↑</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 1. Text-to-Audio ── -->
+  <div class="section" id="t2a">
+    <div class="section-header">
+      <span class="section-num">1</span>
+      <h2>Text-to-Audio Generation</h2>
+    </div>
+    <p class="section-desc">
+      <strong>Input:</strong> a text caption of a sound scene.
+      Instruction format: <code>[Audio] {caption}</code>.
+      Source latent z<sub>s</sub> = zeros; task mask m = 0.
+      <strong>Output:</strong> 10-second audio clip.
+      Evaluated on the AudioCaps test set (881 clips).
+    </p>
+    <div class="cmp-table-wrap">
+      <table class="cmp">
+                <thead>
+          <tr>
+            <th>Prompt</th>
+            <th>Ground Truth</th>
+            <th class="ours-col">UNISON-16k (ours)</th>
+            <th class="ours-col">UNISON-44k (ours)</th>
+            <th>Audio-Omni</th>
+            <th>GenAU-L</th>
+            <th>Tango</th>
+            <th>MMAudio-L</th>
+            <th>Make-An-Audio 2</th>
+            <th>AudioLDM2-Large</th>
+            <th>Stable Audio Open</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="prompt-cell">Clip-clops gallop as the wind blows and thunder cracks</td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s1_gt.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s1_unison16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s1_unison44k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s1_audioomni.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s1_genau.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s1_tango.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s1_mmaudio.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s1_maa2.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s1_audioldm2.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s1_stableaudio.wav"></audio></div></td>
+          </tr>
+          <tr>
+            <td class="prompt-cell">A train running on railroad tracks as a train horn blows and steam hisses</td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s2_gt.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s2_unison16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s2_unison44k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s2_audioomni.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s2_genau.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s2_tango.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s2_mmaudio.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s2_maa2.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s2_audioldm2.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s2_stableaudio.wav"></audio></div></td>
+          </tr>
+          <tr>
+            <td class="prompt-cell">A very low-pitched hum occurs, followed by an explosion</td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s3_gt.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s3_unison16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s3_unison44k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s3_audioomni.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s3_genau.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s3_tango.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s3_mmaudio.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s3_maa2.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s3_audioldm2.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s3_stableaudio.wav"></audio></div></td>
+          </tr>
+          <tr>
+            <td class="prompt-cell">Wind blowing followed by people speaking then a loud burst of thunder</td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s4_gt.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s4_unison16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s4_unison44k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s4_audioomni.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s4_genau.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s4_tango.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s4_mmaudio.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s4_maa2.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s4_audioldm2.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s4_stableaudio.wav"></audio></div></td>
+          </tr>
+          <tr>
+            <td class="prompt-cell">A man speaking over an intercom as a helicopter engine runs followed by several gunshots firing</td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s5_gt.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s5_unison16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s5_unison44k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s5_audioomni.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s5_genau.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s5_tango.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s5_mmaudio.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s5_maa2.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s5_audioldm2.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s5_stableaudio.wav"></audio></div></td>
+          </tr>
+          <tr>
+            <td class="prompt-cell">Footsteps shuffling on snow alongside a camera muffling while wind blows into a microphone</td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s6_gt.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s6_unison16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s6_unison44k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s6_audioomni.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s6_genau.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s6_tango.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s6_mmaudio.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s6_maa2.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s6_audioldm2.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s6_stableaudio.wav"></audio></div></td>
+          </tr>
+          <tr>
+            <td class="prompt-cell">Tribal drums playing as footsteps shuffle on wet dirt as frogs and crickets chirp in the background</td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s7_gt.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s7_unison16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s7_unison44k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s7_audioomni.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s7_genau.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s7_tango.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s7_mmaudio.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s7_maa2.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s7_audioldm2.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2a/s7_stableaudio.wav"></audio></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── 2. TTS ── -->
+  <div class="section" id="tts">
+    <div class="section-header">
+      <span class="section-num">2</span>
+      <h2>Text-to-Speech (Instruction-based)</h2>
+    </div>
+    <p class="section-desc">
+      <strong>Input:</strong> a plain-text instruction specifying speaker gender and content.
+      Instruction format: <code>[Speech] A {gender} voice saying &ldquo;{text}&rdquo;</code>.
+      Source latent z<sub>s</sub> = zeros; task mask m = 0. No phoneme encoder or speaker embedding used.
+      <strong>Output:</strong> speech audio in the specified gender.
+      Evaluated on the Seed-TTS test set (EN &amp; ZH).
+      <br/><span style="color:var(--muted);font-size:.9rem;">
+        Note: Audio-Omni does not support explicit gender control; its output defaults to a male voice and is shown in the male rows.
+        Audio-Omni also does not support Chinese TTS; those cells are left blank.
+      </span>
+    </p>
+    <div class="cmp-table-wrap">
+      <table class="cmp">
+                <thead>
+          <tr>
+            <th>Instruction</th>
+            <th>UNISON 16k (ours)</th>
+            <th>UNISON 44k (ours)</th>
+            <th>Audio-Omni</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- ── English ── -->
+          <tr>
+            <td class="prompt-cell">
+              <div class="prompt-label">EN · female</div>
+              A female voice saying &quot;It now has five chapters: Butterfield Trail, Magazine Mountain, Ozark, Razorback and Cornerstone.&quot;
+            </td>
+            <td><div class="ap-wrap"><audio controls src="audio/tts_en/s1_unison_16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/tts_en/s1_unison_44k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><span style="color:var(--muted);font-size:.8rem;">—</span></div></td>
+          </tr>
+          <tr>
+            <td class="prompt-cell">
+              <div class="prompt-label">EN · male</div>
+              A male voice saying &quot;It now has five chapters: Butterfield Trail, Magazine Mountain, Ozark, Razorback and Cornerstone.&quot;
+            </td>
+            <td><div class="ap-wrap"><audio controls src="audio/tts_en/s1_m_unison_16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/tts_en/s1_m_unison_44k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/tts_en/s1_audioomni.wav"></audio></div></td>
+          </tr>
+          <tr>
+            <td class="prompt-cell">
+              <div class="prompt-label">EN · female</div>
+              A female voice saying &quot;Some large firms or specialized jobs require a master's degree.&quot;
+            </td>
+            <td><div class="ap-wrap"><audio controls src="audio/tts_en/s4_unison_16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/tts_en/s4_unison_44k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><span style="color:var(--muted);font-size:.8rem;">—</span></div></td>
+          </tr>
+          <tr>
+            <td class="prompt-cell">
+              <div class="prompt-label">EN · male</div>
+              A male voice saying &quot;Some large firms or specialized jobs require a master's degree.&quot;
+            </td>
+            <td><div class="ap-wrap"><audio controls src="audio/tts_en/s4_m_unison_16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/tts_en/s4_m_unison_44k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/tts_en/s4_audioomni.wav"></audio></div></td>
+          </tr>
+          <tr>
+            <td class="prompt-cell">
+              <div class="prompt-label">EN · female</div>
+              A female voice saying &quot;He is a good player and deserves a chance at this level.&quot;
+            </td>
+            <td><div class="ap-wrap"><audio controls src="audio/tts_en/s8_unison_16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/tts_en/s8_unison_44k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><span style="color:var(--muted);font-size:.8rem;">—</span></div></td>
+          </tr>
+          <tr>
+            <td class="prompt-cell">
+              <div class="prompt-label">EN · male</div>
+              A male voice saying &quot;He is a good player and deserves a chance at this level.&quot;
+            </td>
+            <td><div class="ap-wrap"><audio controls src="audio/tts_en/s8_m_unison_16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/tts_en/s8_m_unison_44k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/tts_en/s8_audioomni.wav"></audio></div></td>
+          </tr>
+          <!-- ── Chinese ── -->
+          <tr>
+            <td class="prompt-cell">
+              <div class="prompt-label">ZH · female</div>
+              A female voice saying &ldquo;你是不是想死呀你，你问什么呀你。&rdquo;
+            </td>
+            <td><div class="ap-wrap"><audio controls src="audio/tts_en/s3_unison_16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/tts_en/s3_unison_44k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><span style="color:var(--muted);font-size:.8rem;">—</span></div></td>
+          </tr>
+          <tr>
+            <td class="prompt-cell">
+              <div class="prompt-label">ZH · male</div>
+              A male voice saying &ldquo;你是不是想死呀你，你问什么呀你。&rdquo;
+            </td>
+            <td><div class="ap-wrap"><audio controls src="audio/tts_en/s3_m_unison_16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/tts_en/s3_m_unison_44k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><span style="color:var(--muted);font-size:.8rem;">—</span></div></td>
+          </tr>
+          <tr>
+            <td class="prompt-cell">
+              <div class="prompt-label">ZH · female</div>
+              A female voice saying &ldquo;大大的眼睛望着镜头闪闪发亮，肉肉的小胳膊小腿也惹人怜爱。&rdquo;
+            </td>
+            <td><div class="ap-wrap"><audio controls src="audio/tts_en/s5_unison_16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/tts_en/s5_unison_44k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><span style="color:var(--muted);font-size:.8rem;">—</span></div></td>
+          </tr>
+          <tr>
+            <td class="prompt-cell">
+              <div class="prompt-label">ZH · male</div>
+              A male voice saying &ldquo;大大的眼睛望着镜头闪闪发亮，肉肉的小胳膊小腿也惹人怜爱。&rdquo;
+            </td>
+            <td><div class="ap-wrap"><audio controls src="audio/tts_en/s5_m_unison_16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/tts_en/s5_m_unison_44k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><span style="color:var(--muted);font-size:.8rem;">—</span></div></td>
+          </tr>
+          <tr>
+            <td class="prompt-cell">
+              <div class="prompt-label">ZH · female</div>
+              A female voice saying &ldquo;尾号四六七幺的乘客刚夸了你，你是电你是光，你是出行的神话。&rdquo;
+            </td>
+            <td><div class="ap-wrap"><audio controls src="audio/tts_en/s6_unison_16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/tts_en/s6_unison_44k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><span style="color:var(--muted);font-size:.8rem;">—</span></div></td>
+          </tr>
+          <tr>
+            <td class="prompt-cell">
+              <div class="prompt-label">ZH · male</div>
+              A male voice saying &ldquo;尾号四六七幺的乘客刚夸了你，你是电你是光，你是出行的神话。&rdquo;
+            </td>
+            <td><div class="ap-wrap"><audio controls src="audio/tts_en/s6_m_unison_16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/tts_en/s6_m_unison_44k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><span style="color:var(--muted);font-size:.8rem;">—</span></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── 3. Zero-shot TTS ── -->
+  <div class="section" id="zs-tts">
+    <div class="section-header">
+      <span class="section-num">3</span>
+      <h2>Zero-shot Speaker Cloning</h2>
+    </div>
+    <p class="section-desc">
+      <strong>Input:</strong> a short reference audio clip (3–10 s) + target text.
+      Instruction format: <code>[Speech with voice] {text}</code>.
+      Source latent z<sub>s</sub> = VAE(reference clip + zero padding); task mask m = 2. No dedicated speaker encoder.
+      <strong>Output:</strong> full target utterance in the reference speaker's voice.
+      Evaluated on the Seed-TTS test set (EN &amp; ZH).
+    </p>
+    <div class="cmp-table-wrap">
+      <table class="cmp">
+        <thead>
+          <tr>
+            <th>Target Text</th>
+            <th>Reference Speaker</th>
+            <th>Ground Truth</th>
+            <th>UNISON 16k (ours)</th>
+            <th>UNISON 44k (ours)</th>
+            <th>Audio-Omni</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="prompt-cell">
+              <div class="prompt-label">EN · zero-shot</div>
+              "The King of Portugal was being shaved by his barber."
+            </td>
+            <td><div class="ap-wrap"><audio controls src="audio/zs_tts_en/s1_ref.wav"></audio><span class="ap-label">reference</span></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/zs_tts_en/s1_gt.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/zs_tts_en/s1_unison_16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/zs_tts_en/s1_unison_44k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/zs_tts_en/s1_audioomni.wav"></audio></div></td>
+          </tr>
+          <tr>
+            <td class="prompt-cell">
+              <div class="prompt-label">EN · zero-shot</div>
+              "The bark of the pine tree was shiny and dark."
+            </td>
+            <td><div class="ap-wrap"><audio controls src="audio/zs_tts_en/s2_ref.wav"></audio><span class="ap-label">reference</span></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/zs_tts_en/s2_gt.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/zs_tts_en/s2_unison_16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/zs_tts_en/s2_unison_44k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/zs_tts_en/s2_audioomni.wav"></audio></div></td>
+          </tr>
+          <tr>
+            <td class="prompt-cell">
+              <div class="prompt-label">ZH · zero-shot</div>
+              "是对全球时装产业，与时装学院伟大成就的曼妙回眸。"
+            </td>
+            <td><div class="ap-wrap"><audio controls src="audio/zs_tts_en/s3_ref.wav"></audio><span class="ap-label">reference</span></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/zs_tts_en/s3_gt.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/zs_tts_en/s3_unison_16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/zs_tts_en/s3_unison_44k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><span style="color:var(--muted);font-size:.8rem;">—</span></div></td>
+          </tr>
+          <tr>
+            <td class="prompt-cell">
+              <div class="prompt-label">ZH · zero-shot</div>
+              "顺风时提高警惕，逆风时笃定前行。"
+            </td>
+            <td><div class="ap-wrap"><audio controls src="audio/zs_tts_en/s4_ref.wav"></audio><span class="ap-label">reference</span></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/zs_tts_en/s4_gt.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/zs_tts_en/s4_unison_16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/zs_tts_en/s4_unison_44k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><span style="color:var(--muted);font-size:.8rem;">—</span></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── 4. Mixed Speech + Audio ── -->
+  <div class="section" id="t2as">
+    <div class="section-header">
+      <span class="section-num">4</span>
+      <h2>Mixed Speech-and-Audio Generation (T2AS)</h2>
+    </div>
+    <p class="section-desc">
+      <strong>Input:</strong> a joint instruction specifying both speech and background sound.
+      Instruction format: <code>[Speech] &hellip; [Audio] &hellip;</code>
+      (speech tokens describe what to say and gender; audio tokens describe the background soundscape).
+      Source latent z<sub>s</sub> = zeros; task mask m = 0.
+      <strong>Output:</strong> a unified audio clip containing intelligible speech mixed with the described background,
+      generated in a single forward pass.
+    </p>
+    <div class="cmp-table-wrap">
+      <table class="cmp">
+                <thead>
+          <tr>
+            <th>Instruction</th>
+            <th>UNISON 16k (ours)</th>
+            <th>UNISON 44k (ours)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- ── English ── -->
+          <tr>
+            <td class="prompt-cell">
+              <div class="prompt-label">Speech (female) · EN</div>
+              &ldquo;She put on her slippers, scaled the stairs, and went to bed.&rdquo;<br/>
+              <span style="color:var(--muted);font-size:.8rem;">Background: A bird is cooing and flapping its wings</span>
+            </td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2as/s3_unison_16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2as/s3_unison_44k.wav"></audio></div></td>
+          </tr>
+          <tr>
+            <td class="prompt-cell">
+              <div class="prompt-label">Speech (female) · EN</div>
+              &ldquo;He chairs the executive committee of council and the community policing committee.&rdquo;<br/>
+              <span style="color:var(--muted);font-size:.8rem;">Background: Bee buzzes while man speaks</span>
+            </td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2as/s11_unison_16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2as/s11_unison_44k.wav"></audio></div></td>
+          </tr>
+          <tr>
+            <td class="prompt-cell">
+              <div class="prompt-label">Speech (male) · EN</div>
+              &ldquo;It then became involved with pharmaceuticals, food additives, and industrial and consumer chemicals.&rdquo;<br/>
+              <span style="color:var(--muted);font-size:.8rem;">Background: A man speaks with a high frequency hum and some banging and clanking</span>
+            </td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2as/s7_unison_16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2as/s7_unison_44k.wav"></audio></div></td>
+          </tr>
+          <!-- ── Chinese ── -->
+          <tr>
+            <td class="prompt-cell">
+              <div class="prompt-label">Speech (male) · ZH</div>
+              &ldquo;目前，葛某及其朋友也被另案处理。&rdquo;<br/>
+              <span style="color:var(--muted);font-size:.8rem;">Background: Several very loud explosions occur</span>
+            </td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2as/s4_unison_16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2as/s4_unison_44k.wav"></audio></div></td>
+          </tr>
+          <tr>
+            <td class="prompt-cell">
+              <div class="prompt-label">Speech (female) · ZH</div>
+              &ldquo;二儿子同样是不会浪费时间的人。&rdquo;<br/>
+              <span style="color:var(--muted);font-size:.8rem;">Background: A piano playing as plastic bonks</span>
+            </td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2as/s6_unison_16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2as/s6_unison_44k.wav"></audio></div></td>
+          </tr>
+          <tr>
+            <td class="prompt-cell">
+              <div class="prompt-label">Speech (female) · ZH</div>
+              &ldquo;不光俺村群众不方便，谁从这过都不方便。&rdquo;<br/>
+              <span style="color:var(--muted);font-size:.8rem;">Background: Man speaks in a crowd, a distant horn blows, then a race car goes by</span>
+            </td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2as/s5_unison_16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/t2as/s5_unison_44k.wav"></audio></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── 5. Audio Editing ── -->
+  <div class="section" id="edit-audio">
+    <div class="section-header">
+      <span class="section-num">5</span>
+      <h2>Audio Scene Editing (Add / Remove / Replace)</h2>
+    </div>
+    <p class="section-desc">
+      <strong>Input:</strong> source audio clip + text edit instruction.
+      Instruction formats —       Add: <code>[Edit][Audio] Add {event}</code>;       Remove: <code>[Edit][Audio] Remove {event}</code>;       Replace: <code>[Edit][Audio] Remove {old} [Edit][Audio] Add {new}</code>.
+      Source latent z<sub>s</sub> = VAE(source clip); task mask m = 1.
+      <strong>Output:</strong> edited audio clip.
+      Compared with MMEDIT, AudioEditCode (DDPM &amp; SDEdit), and Audio-Omni.
+    </p>
+    <div class="cmp-table-wrap">
+      <table class="cmp">
+                <thead>
+          <tr>
+            <th>Edit Instruction</th>
+            <th>Source Audio</th>
+            <th class="ours-col">UNISON 16k (ours)</th>
+            <th class="ours-col">UNISON 44k (ours)</th>
+            <th>Audio-Omni</th>
+            <th>MMEdit</th>
+            <th>AudioEditCode (DDPM)</th>
+            <th>AudioEditCode (SDEdit)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="prompt-cell">
+              <div class="prompt-label">Add</div>
+              Add Thunder to the background.
+            </td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s1_src.wav"></audio><span class="ap-label">source</span></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s1_unison_16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s1_unison_44k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s1_audioomni.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s1_mmedit.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s1_ddpm.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s1_sdedit.wav"></audio></div></td>
+          </tr>
+          <tr>
+            <td class="prompt-cell">
+              <div class="prompt-label">Add</div>
+              Add Bow-wow and Whimper (dog) to the background.
+            </td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s4_src.wav"></audio><span class="ap-label">source</span></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s4_unison_16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s4_unison_44k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s4_audioomni.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s4_mmedit.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s4_ddpm.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s4_sdedit.wav"></audio></div></td>
+          </tr>
+          <tr>
+            <td class="prompt-cell">
+              <div class="prompt-label">Remove</div>
+              Eliminate the sound of Gunshot, gunfire.
+            </td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s5_src.wav"></audio><span class="ap-label">source</span></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s5_unison_16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s5_unison_44k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s5_audioomni.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s5_mmedit.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s5_ddpm.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s5_sdedit.wav"></audio></div></td>
+          </tr>
+          <tr>
+            <td class="prompt-cell">
+              <div class="prompt-label">Remove</div>
+              Eliminate the sound of Bird and Domestic animals, pets.
+            </td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s6_src.wav"></audio><span class="ap-label">source</span></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s6_unison_16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s6_unison_44k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s6_audioomni.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s6_mmedit.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s6_ddpm.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s6_sdedit.wav"></audio></div></td>
+          </tr>
+          <tr>
+            <td class="prompt-cell">
+              <div class="prompt-label">Replace</div>
+              Remove the Duck. Add Sizzle.
+            </td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s3_src.wav"></audio><span class="ap-label">source</span></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s3_unison_16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s3_unison_44k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s3_audioomni.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s3_mmedit.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s3_ddpm.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s3_sdedit.wav"></audio></div></td>
+          </tr>
+          <tr>
+            <td class="prompt-cell">
+              <div class="prompt-label">Replace</div>
+              Remove the Burst, pop. Add Telephone dialing, DTMF.
+            </td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s7_src.wav"></audio><span class="ap-label">source</span></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s7_unison_16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s7_unison_44k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s7_audioomni.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s7_mmedit.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s7_ddpm.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s7_sdedit.wav"></audio></div></td>
+          </tr>
+          <tr>
+            <td class="prompt-cell">
+              <div class="prompt-label">Replace</div>
+              Remove the Bell. Add Truck and Skidding.
+            </td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s8_src.wav"></audio><span class="ap-label">source</span></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s8_unison_16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s8_unison_44k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s8_audioomni.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s8_mmedit.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s8_ddpm.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_audio/s8_sdedit.wav"></audio></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── 6. Speech Editing ── -->
+  <div class="section" id="edit-speech">
+    <div class="section-header">
+      <span class="section-num">6</span>
+      <h2>Speech-in-Scene Editing (Insert / Delete / Rewrite)</h2>
+    </div>
+    <p class="section-desc">
+      <strong>Input:</strong> source audio clip (speech-in-scene) + text edit instruction.
+      Instruction formats —       Insert: <code>[Edit][Speech] Add a voice saying &ldquo;{text}&rdquo;</code>;       Delete: <code>[Edit][Speech] Remove the speech</code>;       Rewrite: <code>[Edit][Speech] Change speech to &ldquo;{new}&rdquo;</code>.
+      Source latent z<sub>s</sub> = VAE(background) or VAE(background + old speech); task mask m = 1.
+      <strong>Output:</strong> edited audio with modified speech, background preserved.
+    </p>
+    <div class="cmp-table-wrap">
+      <table class="cmp">
+                <thead>
+          <tr>
+            <th>Edit Instruction</th>
+            <th>Source Audio</th>
+            <th>UNISON 16k (ours)</th>
+            <th>UNISON 44k (ours)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="prompt-cell">
+              <div class="prompt-label">Rewrite content</div>
+              Alter the spoken content to &ldquo;I will not be alarmed though your sister does play so well.&rdquo;
+            </td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_speech/s1_src.wav"></audio><span class="ap-label">source</span></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_speech/s1_unison_16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_speech/s1_unison_44k.wav"></audio></div></td>
+          </tr>
+          <tr>
+            <td class="prompt-cell">
+              <div class="prompt-label">Insert speech</div>
+              Add a voice saying &ldquo;The facade is constructed from white Portland stone and red brick.&rdquo;
+            </td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_speech/s2_src.wav"></audio><span class="ap-label">source</span></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_speech/s2_unison_16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_speech/s2_unison_44k.wav"></audio></div></td>
+          </tr>
+          <tr>
+            <td class="prompt-cell">
+              <div class="prompt-label">Delete speech</div>
+              Remove the speech; keep the background sounds.
+            </td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_speech/s3_src.wav"></audio><span class="ap-label">source</span></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_speech/s3_unison_16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/edit_speech/s3_unison_44k.wav"></audio></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── 7. Speech Denoising ── -->
+  <div class="section" id="denoise">
+    <div class="section-header">
+      <span class="section-num">7</span>
+      <h2>Speech Denoising</h2>
+    </div>
+    <p class="section-desc">
+      <strong>Input:</strong> noisy speech recording.
+      Instruction format: <code>[Edit][Speech] Denoise the record</code>.
+      Source latent z<sub>s</sub> = VAE(noisy speech); task mask m = 1.
+      <strong>Output:</strong> clean speech waveform (background noise removed).
+    </p>
+    <div class="cmp-table-wrap">
+      <table class="cmp">
+        <thead>
+          <tr>
+            <th>Transcript</th>
+            <th>Noisy Input</th>
+            <th>Clean Reference</th>
+            <th>UNISON 16k (ours)</th>
+            <th>UNISON 44k (ours)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- ── English ── -->
+          <tr>
+            <td class="prompt-cell">
+              <div class="prompt-label">EN · SNR 11.3 dB</div>
+              &ldquo;It does not comment on specific disputes.&rdquo;
+            </td>
+            <td><div class="ap-wrap"><audio controls src="audio/denoise/denoise_0002_noisy.wav"></audio><span class="ap-label">noisy</span></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/denoise/denoise_0002_clean.wav"></audio><span class="ap-label">clean</span></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/denoise/denoise_0002_unison_16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/denoise/denoise_0002_unison_44k.wav"></audio></div></td>
+          </tr>
+          <tr>
+            <td class="prompt-cell">
+              <div class="prompt-label">EN · SNR 6.4 dB</div>
+              &ldquo;Man with guitar holding a microphone in one hand and extending his other arm.&rdquo;
+            </td>
+            <td><div class="ap-wrap"><audio controls src="audio/denoise/denoise_0003_noisy.wav"></audio><span class="ap-label">noisy</span></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/denoise/denoise_0003_clean.wav"></audio><span class="ap-label">clean</span></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/denoise/denoise_0003_unison_16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/denoise/denoise_0003_unison_44k.wav"></audio></div></td>
+          </tr>
+          <!-- ── Chinese ── -->
+          <tr>
+            <td class="prompt-cell">
+              <div class="prompt-label">ZH · SNR 9.4 dB</div>
+              &ldquo;乘车系好安全带，将你安全带向爱。&rdquo;
+            </td>
+            <td><div class="ap-wrap"><audio controls src="audio/denoise/denoise_0000_noisy.wav"></audio><span class="ap-label">noisy</span></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/denoise/denoise_0000_clean.wav"></audio><span class="ap-label">clean</span></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/denoise/denoise_0000_unison_16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/denoise/denoise_0000_unison_44k.wav"></audio></div></td>
+          </tr>
+          <tr>
+            <td class="prompt-cell">
+              <div class="prompt-label">ZH · SNR 10.9 dB</div>
+              &ldquo;自动驾驶将为现有的司机运力提供补充。&rdquo;
+            </td>
+            <td><div class="ap-wrap"><audio controls src="audio/denoise/denoise_0001_noisy.wav"></audio><span class="ap-label">noisy</span></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/denoise/denoise_0001_clean.wav"></audio><span class="ap-label">clean</span></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/denoise/denoise_0001_unison_16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/denoise/denoise_0001_unison_44k.wav"></audio></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── 8. Timed Generation ── -->
+  <div class="section" id="timed-gen">
+    <div class="section-header">
+      <span class="section-num">8</span>
+      <h2>Timed Temporal Composition</h2>
+    </div>
+    <p class="section-desc">
+      <strong>Input:</strong> a text instruction with explicit temporal anchors.
+      Instruction format: <code>[Audio] From {t1}s to {t2}s, {event}. From {t3}s to {t4}s, {event}. &hellip;</code>
+      Source latent z<sub>s</sub> = zeros; task mask m = 0. Timestamps parsed directly by the frozen LLM.
+      <strong>Output:</strong> 10-second audio where each sound event occurs at the specified time interval.
+    </p>
+    <div class="cmp-table-wrap">
+      <table class="cmp">
+                <thead>
+          <tr>
+            <th>Timed Instruction</th>
+            <th>UNISON 16k (ours)</th>
+            <th>UNISON 44k (ours)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="prompt-cell">From 0.0s to 3.1s, Ambulance (siren). From 3.6s to 6.1s, Chainsaw. From 6.6s to 10.0s, Subway, metro, underground.</td>
+            <td><div class="ap-wrap"><audio controls src="audio/timed_gen/s1_unison_16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/timed_gen/s1_unison_44k.wav"></audio></div></td>
+          </tr>
+          <tr>
+            <td class="prompt-cell">From 0.0s to 4.1s, Thunder. From 4.6s to 10.0s, Stream.</td>
+            <td><div class="ap-wrap"><audio controls src="audio/timed_gen/s2_unison_16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/timed_gen/s2_unison_44k.wav"></audio></div></td>
+          </tr>
+          <tr>
+            <td class="prompt-cell">From 0.0s to 4.2s, Rub. From 4.7s to 10.0s, Clip-clop.</td>
+            <td><div class="ap-wrap"><audio controls src="audio/timed_gen/s3_unison_16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/timed_gen/s3_unison_44k.wav"></audio></div></td>
+          </tr>
+          <tr>
+            <td class="prompt-cell"><em>[Overlapping]</em> From 0.0s to 4.8s, Children playing. From 3.1s to 7.9s, Ambulance (siren). From 6.1s to 10.0s, Chainsaw.</td>
+            <td><div class="ap-wrap"><audio controls src="audio/timed_gen/s4_unison_16k.wav"></audio></div></td>
+            <td><div class="ap-wrap"><audio controls src="audio/timed_gen/s4_unison_44k.wav"></audio></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <p>
+    <a href="https://arxiv.org/abs/2605.31530" target="_blank" rel="noopener noreferrer">arXiv</a>
+    &nbsp;&middot;&nbsp;
+    <a href="https://github.com/lizhaoqing/UNISON" target="_blank" rel="noopener noreferrer">GitHub</a>
+    &nbsp;&middot;&nbsp;
+    &copy; 2026
+  </p>
+  <p style="margin-top:.4rem;">UNISON outputs are shown at 16 kHz and 44.1 kHz mono; baseline sampling rates may differ.</p>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,7 @@
+# local-only files — not pushed to public repo
+local_preview.html
+preview.html
+populate_samples.py
+update_captions.py
+/fig1.png
+/fig2.pdf
